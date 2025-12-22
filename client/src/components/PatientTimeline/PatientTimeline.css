@@ -1,0 +1,253 @@
+.patient-timeline {
+  padding: 0;
+}
+
+.timeline-loading {
+  padding: 1.5rem;
+}
+
+.timeline-error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--danger);
+}
+
+.timeline-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 12px 12px 0 0;
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patient-avatar {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.patient-info h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.patient-code {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+}
+
+.timeline-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+}
+
+.stat-card svg {
+  color: var(--primary);
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.timeline-list {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.timeline-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.timeline-empty svg {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.timeline-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item.expanded {
+  border-color: var(--primary);
+}
+
+.timeline-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.timeline-main h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.timeline-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.timeline-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.expand-btn:hover {
+  background: var(--bg-primary);
+  color: var(--primary);
+}
+
+.timeline-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.875rem;
+}
+
+.timeline-details p {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.medicines-list {
+  margin-top: 0.75rem;
+}
+
+.medicines-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.medicines-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.medicines-list li svg {
+  color: var(--primary);
+}
+
+.medicines-list .dosage {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.medicines-list .duration {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.medicines-list .price {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.badge-pending {
+  background: var(--warning);
+  color: white;
+}
+
+.badge-completed, .badge-dispensed, .badge-paid {
+  background: var(--success);
+  color: white;
+}
+
+.badge-cancelled {
+  background: var(--danger);
+  color: white;
+}

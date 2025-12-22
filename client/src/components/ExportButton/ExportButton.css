@@ -1,0 +1,93 @@
+/* Export Button */
+
+.export-button-wrapper {
+  position: relative;
+}
+
+.export-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.export-trigger .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 220px;
+  padding: var(--spacing-sm);
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.export-option:hover {
+  background: var(--background-secondary);
+}
+
+.export-option svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.export-option div {
+  display: flex;
+  flex-direction: column;
+}
+
+.export-option strong {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.export-option span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

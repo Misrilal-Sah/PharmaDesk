@@ -1,0 +1,359 @@
+/* Login Page Styles */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  padding: var(--spacing-lg);
+}
+
+.login-container {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+/* Left Branding Section */
+.login-branding {
+  flex: 1;
+  background: linear-gradient(135deg, #1565C0 0%, #0D47A1 50%, #00BFA5 100%);
+  padding: var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.branding-content {
+  text-align: center;
+}
+
+.brand-logo {
+  margin-bottom: var(--spacing-lg);
+}
+
+.logo-icon-large {
+  width: 80px;
+  height: 80px;
+}
+
+.branding-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: var(--spacing-sm);
+}
+
+.branding-content h1 span {
+  color: #4CAF50;
+}
+
+.branding-content > p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: var(--spacing-xl);
+}
+
+.features-list {
+  text-align: left;
+  margin-top: var(--spacing-xl);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  font-size: 0.9375rem;
+}
+
+.feature-icon {
+  font-size: 1.25rem;
+}
+
+/* Right Form Section */
+.login-form-section {
+  flex: 1;
+  padding: var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-form-container {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-form-container h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.5;
+}
+
+.login-subtitle strong {
+  color: var(--primary);
+}
+
+/* Auth Card (for verify/reset screens) */
+.auth-card {
+  text-align: center;
+}
+
+.auth-card h2 {
+  text-align: center;
+}
+
+.auth-card .login-subtitle {
+  text-align: center;
+}
+
+.auth-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.auth-icon.verify {
+  background: linear-gradient(135deg, rgba(21, 101, 192, 0.15), rgba(0, 191, 165, 0.15));
+  color: var(--primary);
+}
+
+.auth-icon.forgot {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 193, 7, 0.15));
+  color: #FF9800;
+}
+
+.auth-icon.reset {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(0, 191, 165, 0.15));
+  color: #4CAF50;
+}
+
+[data-theme="dark"] .auth-icon.verify {
+  background: linear-gradient(135deg, rgba(0, 191, 165, 0.2), rgba(21, 101, 192, 0.2));
+}
+
+[data-theme="dark"] .auth-icon.forgot {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.2));
+}
+
+[data-theme="dark"] .auth-icon.reset {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(0, 191, 165, 0.2));
+}
+
+/* OTP Input Boxes */
+.otp-container {
+  margin: var(--spacing-xl) 0;
+}
+
+.otp-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.otp-box {
+  width: 48px;
+  height: 56px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background-secondary);
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  caret-color: var(--primary);
+}
+
+.otp-box:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+}
+
+[data-theme="dark"] .otp-box:focus {
+  box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.15);
+}
+
+.otp-box.filled {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.otp-box.error {
+  border-color: var(--error);
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* Input with icon */
+.input-icon-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.form-input.with-icon {
+  padding-left: 44px;
+}
+
+/* Password Input */
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Auth Footer */
+.auth-footer {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.resend-text {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+/* Login Footer */
+.login-footer {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.link-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Forgot Password Link */
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: var(--spacing-md);
+}
+
+.forgot-password-link .link-btn {
+  font-size: 0.875rem;
+}
+
+/* Alerts in auth */
+.auth-card .alert {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+    max-width: 400px;
+  }
+  
+  .login-branding {
+    padding: var(--spacing-xl);
+  }
+  
+  .features-list {
+    display: none;
+  }
+  
+  .branding-content h1 {
+    font-size: 2rem;
+  }
+  
+  .login-form-section {
+    padding: var(--spacing-xl);
+  }
+
+  .otp-box {
+    width: 42px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .otp-boxes {
+    gap: 8px;
+  }
+}

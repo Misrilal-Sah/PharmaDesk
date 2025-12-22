@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1565C0"/>
+      <stop offset="100%" style="stop-color:#00BFA5"/>
+    </linearGradient>
+  </defs>
+  <!-- Clipboard -->
+  <rect x="20" y="15" width="45" height="55" rx="4" fill="none" stroke="url(#grad)" stroke-width="3"/>
+  <rect x="30" y="10" width="25" height="8" rx="2" fill="url(#grad)"/>
+  <!-- Cross -->
+  <rect x="35" y="28" width="15" height="4" rx="1" fill="#90CAF9"/>
+  <rect x="40.5" y="22.5" width="4" height="15" rx="1" fill="#90CAF9"/>
+  <!-- Checkmarks -->
+  <path d="M28 45 L32 49 L38 42" stroke="#4CAF50" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M28 55 L32 59 L38 52" stroke="#4CAF50" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Pill -->
+  <ellipse cx="70" cy="60" rx="18" ry="10" transform="rotate(-30 70 60)" fill="none" stroke="url(#grad)" stroke-width="3"/>
+  <path d="M58 52 Q70 60 82 68" stroke="url(#grad)" stroke-width="2"/>
+  <ellipse cx="62" cy="54" rx="8" ry="5" transform="rotate(-30 62 54)" fill="#1565C0"/>
+  <ellipse cx="78" cy="66" rx="8" ry="5" transform="rotate(-30 78 66)" fill="#00BFA5"/>
+</svg>

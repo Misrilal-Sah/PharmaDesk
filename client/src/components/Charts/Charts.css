@@ -1,0 +1,103 @@
+.chart-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-title svg {
+  color: var(--primary);
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Charts grid layout */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Full width chart section */
+.chart-full-width {
+  grid-column: 1 / -1;
+}
+
+/* Chart toggle buttons */
+.chart-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--background-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+}
+
+.chart-toggle button {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chart-toggle button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.chart-toggle button:hover:not(.active) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* Recharts custom styling */
+.recharts-wrapper {
+  font-family: var(--font-family);
+}
+
+.recharts-legend-item-text {
+  color: var(--text-primary) !important;
+  font-size: 0.8125rem;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-default-tooltip {
+  font-family: var(--font-family) !important;
+}

@@ -1,0 +1,100 @@
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirm-modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.confirm-icon.warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.confirm-icon.danger {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.confirm-icon.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.confirm-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.confirm-message {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirm-actions .btn {
+  min-width: 100px;
+  padding: 0.75rem 1.5rem;
+}
+
+/* Make danger button look more alarming */
+.confirm-actions .btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.confirm-actions .btn-danger:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
