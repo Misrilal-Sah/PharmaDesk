@@ -3,8 +3,8 @@ import {
 } from 'recharts';
 
 const COLORS = [
-  '#1565C0', '#00BFA5', '#FF9800', '#E91E63', 
-  '#9C27B0', '#3F51B5', '#009688', '#795548'
+  '#15803D', '#0369A1', '#D97706', '#DC2626',
+  '#7C3AED', '#0891B2', '#059669', '#9333EA'
 ];
 
 export default function InventoryPieChart({ data = [], height = 300 }) {

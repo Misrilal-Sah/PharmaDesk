@@ -4,8 +4,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useShortcuts } from '../context/ShortcutsContext';
 import { useToast } from '../components/Toast/Toast';
 import { useConfirm } from '../components/ConfirmModal/ConfirmModal';
-import { authAPI, usersAPI, sessionsAPI, twoFactorAPI } from '../services/api';
-import { User, Moon, Sun, Lock, Save, Camera, Mail, Phone, Shield, Keyboard, Command, Info, Edit2, RotateCcw, Check, X, Monitor, Smartphone, LogOut } from 'lucide-react';
+import { authAPI, usersAPI, sessionsAPI, twoFactorAPI, uploadAPI } from '../services/api';
+import { User, Moon, Sun, Lock, Save, Camera, Mail, Phone, Shield, Keyboard, Command, Info, Edit2, RotateCcw, Check, X, Monitor, Smartphone, LogOut, Eye, EyeOff, KeyRound } from 'lucide-react';
 
 export default function Settings() {
   const { user } = useAuth();
@@ -38,6 +38,18 @@ export default function Settings() {
   const [twoFASecret, setTwoFASecret] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
   const [backupCodes, setBackupCodes] = useState([]);
+  // 2FA disable state
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
+  const [disable2FAPassword, setDisable2FAPassword] = useState('');
+  const [showDisable2FAPass, setShowDisable2FAPass] = useState(false);
+  // Email change flow state
+  const [emailChangeStep, setEmailChangeStep] = useState('idle'); // 'idle' | 'confirm-password' | 'verify-otp'
+  const [emailChangePassword, setEmailChangePassword] = useState('');
+  const [emailChangeOtp, setEmailChangeOtp] = useState('');
+  const [pendingNewEmail, setPendingNewEmail] = useState('');
+  const [showEmailChangePass, setShowEmailChangePass] = useState(false);
+  // Password visibility toggles
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
 
   useEffect(() => {
     if (user) {
@@ -114,22 +126,19 @@ export default function Settings() {
   };
 
   const handleDisable2FA = async () => {
-    const confirmed = await confirm({
-      title: 'Disable Two-Factor Authentication',
-      message: 'Are you sure you want to disable 2FA? This will make your account less secure.',
-      type: 'warning',
-      confirmText: 'Disable 2FA',
-      cancelText: 'Cancel'
-    });
-    if (!confirmed) return;
-    
+    if (!disable2FAPassword) {
+      toast.error('Please enter your password');
+      return;
+    }
     setTwoFALoading(true);
     try {
-      await twoFactorAPI.disable(passwordForm.currentPassword, '');
+      await twoFactorAPI.disable(disable2FAPassword, '');
       setTwoFAEnabled(false);
       setShow2FASetup(false);
       setQrCode('');
       setBackupCodes([]);
+      setShowDisable2FA(false);
+      setDisable2FAPassword('');
       toast.success('Two-Factor Authentication disabled');
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to disable 2FA');
@@ -141,15 +150,58 @@ export default function Settings() {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    // If email changed, trigger email verification flow instead
+    if (profileForm.email !== (user?.email || '')) {
+      setPendingNewEmail(profileForm.email);
+      setProfileForm(prev => ({ ...prev, email: user?.email || '' })); // revert email in form
+      setEmailChangeStep('confirm-password');
+      return;
+    }
     setLoading(true);
     try {
-      await usersAPI.update(user.id, profileForm);
-      const updatedUser = { ...user, ...profileForm };
+      await usersAPI.update(user.id, { full_name: profileForm.full_name, phone: profileForm.phone, avatar: profileForm.avatar });
+      const updatedUser = { ...user, full_name: profileForm.full_name, phone: profileForm.phone, avatar: profileForm.avatar };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       toast.success('Profile updated successfully!');
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestEmailChange = async (e) => {
+    e.preventDefault();
+    if (!emailChangePassword) { toast.error('Password is required'); return; }
+    setLoading(true);
+    try {
+      await authAPI.requestEmailChange({ newEmail: pendingNewEmail, password: emailChangePassword });
+      setEmailChangeStep('verify-otp');
+      setEmailChangePassword('');
+      toast.success('Verification code sent to your new email');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to send verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyEmailChange = async (e) => {
+    e.preventDefault();
+    if (!emailChangeOtp || emailChangeOtp.length !== 6) { toast.error('Enter the 6-digit code'); return; }
+    setLoading(true);
+    try {
+      await authAPI.verifyEmailChange({ newEmail: pendingNewEmail, otp: emailChangeOtp });
+      const updatedUser = { ...user, email: pendingNewEmail };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      toast.success('Email updated successfully!');
+      setEmailChangeStep('idle');
+      setEmailChangeOtp('');
+      setPendingNewEmail('');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Invalid verification code');
     } finally {
       setLoading(false);
     }
@@ -182,17 +234,28 @@ export default function Settings() {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Image must be less than 2MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileForm({ ...profileForm, avatar: reader.result });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
     }
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      setProfileForm(prev => ({ ...prev, avatar: base64 })); // optimistic preview
+      try {
+        const res = await uploadAPI.avatar(base64);
+        setProfileForm(prev => ({ ...prev, avatar: res.data.url }));
+        // Update localStorage immediately
+        const updatedUser = { ...JSON.parse(localStorage.getItem('user') || '{}'), avatar: res.data.url };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        toast.success('Profile picture updated!');
+      } catch (error) {
+        toast.error(error.response?.data?.error || 'Failed to upload image');
+        setProfileForm(prev => ({ ...prev, avatar: user?.avatar || '' })); // revert on error
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const startEditingShortcut = (shortcut) => {
@@ -354,7 +417,13 @@ export default function Settings() {
             <div className="grid grid-2">
               <div className="form-group">
                 <label className="form-label"><Mail size={14} /> Email</label>
-                <input type="email" className="form-input" value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} required />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input type="email" className="form-input" value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} required style={{ flex: 1 }} />
+                  {profileForm.email !== (user?.email || '') && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--warning)', alignSelf: 'center', whiteSpace: 'nowrap' }}>⚠ Requires verification</span>
+                  )}
+                </div>
+                <small className="text-muted">Changing email requires verification via OTP</small>
               </div>
               <div className="form-group">
                 <label className="form-label"><Phone size={14} /> Phone</label>
@@ -366,6 +435,45 @@ export default function Settings() {
               <Save size={16} /> {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
+
+          {/* Email Change Verification Flow */}
+          {emailChangeStep === 'confirm-password' && (
+            <div className="card" style={{ marginTop: '1rem', border: '1px solid var(--warning)', background: 'rgba(255,167,38,0.05)' }}>
+              <h4 style={{ marginBottom: '1rem' }}><Mail size={16} /> Verify Email Change</h4>
+              <p className="text-muted" style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>Enter your password to send a verification code to <strong>{pendingNewEmail}</strong>.</p>
+              <form onSubmit={handleRequestEmailChange}>
+                <div className="form-group">
+                  <label className="form-label">Your Current Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input type={showEmailChangePass ? 'text' : 'password'} className="form-input" value={emailChangePassword} onChange={(e) => setEmailChangePassword(e.target.value)} required autoFocus />
+                    <button type="button" onClick={() => setShowEmailChangePass(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {showEmailChangePass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn btn-ghost" onClick={() => { setEmailChangeStep('idle'); setEmailChangePassword(''); setPendingNewEmail(''); }}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={loading}><Mail size={14} /> {loading ? 'Sending...' : 'Send Code'}</button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {emailChangeStep === 'verify-otp' && (
+            <div className="card" style={{ marginTop: '1rem', border: '1px solid var(--success)', background: 'rgba(0,191,165,0.05)' }}>
+              <h4 style={{ marginBottom: '1rem' }}><KeyRound size={16} /> Enter Verification Code</h4>
+              <p className="text-muted" style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>We sent a 6-digit code to <strong>{pendingNewEmail}</strong>.</p>
+              <form onSubmit={handleVerifyEmailChange}>
+                <div className="form-group">
+                  <input type="text" className="form-input" placeholder="Enter 6-digit code" value={emailChangeOtp} onChange={(e) => setEmailChangeOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} maxLength={6} style={{ textAlign: 'center', letterSpacing: '0.5rem', fontSize: '1.25rem' }} autoFocus />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn btn-ghost" onClick={() => { setEmailChangeStep('idle'); setEmailChangeOtp(''); setPendingNewEmail(''); }}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={loading || emailChangeOtp.length !== 6}><Check size={14} /> {loading ? 'Verifying...' : 'Verify & Update'}</button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
@@ -377,16 +485,31 @@ export default function Settings() {
             <form onSubmit={handlePasswordChange}>
               <div className="form-group">
                 <label className="form-label">Current Password</label>
-                <input type="password" className="form-input" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required />
+                <div style={{ position: 'relative' }}>
+                  <input type={showPasswords.current ? 'text' : 'password'} className="form-input" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required style={{ paddingRight: '2.5rem' }} />
+                  <button type="button" onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="grid grid-2">
                 <div className="form-group">
                   <label className="form-label">New Password</label>
-                  <input type="password" className="form-input" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required minLength={6} />
+                  <div style={{ position: 'relative' }}>
+                    <input type={showPasswords.new ? 'text' : 'password'} className="form-input" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required minLength={6} style={{ paddingRight: '2.5rem' }} />
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Confirm New Password</label>
-                  <input type="password" className="form-input" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required />
+                  <div style={{ position: 'relative' }}>
+                    <input type={showPasswords.confirm ? 'text' : 'password'} className="form-input" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required style={{ paddingRight: '2.5rem' }} />
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <button type="submit" className="btn btn-primary" disabled={loading}>
@@ -475,10 +598,41 @@ export default function Settings() {
               </div>
             )}
 
-            {twoFAEnabled && backupCodes.length === 0 && (
-              <button className="btn btn-ghost" style={{ color: 'var(--danger)' }} onClick={handleDisable2FA} disabled={twoFALoading}>
-                {twoFALoading ? 'Disabling...' : 'Disable Two-Factor Authentication'}
+            {twoFAEnabled && backupCodes.length === 0 && !showDisable2FA && (
+              <button className="btn btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => setShowDisable2FA(true)}>
+                Disable Two-Factor Authentication
               </button>
+            )}
+
+            {twoFAEnabled && showDisable2FA && (
+              <div style={{ background: 'rgba(239,83,80,0.08)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--danger)' }}>
+                <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Enter your password to confirm disabling Two-Factor Authentication.
+                </p>
+                <div className="form-group">
+                  <label className="form-label">Your Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showDisable2FAPass ? 'text' : 'password'}
+                      className="form-input"
+                      value={disable2FAPassword}
+                      onChange={(e) => setDisable2FAPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      autoFocus
+                      style={{ paddingRight: '2.5rem' }}
+                    />
+                    <button type="button" onClick={() => setShowDisable2FAPass(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {showDisable2FAPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-ghost" onClick={() => { setShowDisable2FA(false); setDisable2FAPassword(''); }}>Cancel</button>
+                  <button className="btn btn-ghost" style={{ color: 'var(--danger)' }} onClick={handleDisable2FA} disabled={twoFALoading || !disable2FAPassword}>
+                    {twoFALoading ? 'Disabling...' : 'Confirm Disable 2FA'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -181,3 +181,8 @@ export const patientTimelineAPI = {
   getTimeline: (patientId) => api.get(`/patients/${patientId}/timeline`)
 };
 
+// Upload API
+export const uploadAPI = {
+  avatar: (imageBase64) => api.post('/upload/avatar', { image: imageBase64 })
+};
+

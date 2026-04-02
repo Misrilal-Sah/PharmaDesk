@@ -3,6 +3,7 @@ import { inventoryAPI, medicinesAPI, suppliersAPI } from '../services/api';
 import { useToast } from '../components/Toast/Toast';
 import { TableSkeleton, SkeletonStatCard } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { Package, AlertTriangle, Clock, Plus, X } from 'lucide-react';
 
 export default function Inventory() {
@@ -17,6 +18,8 @@ export default function Inventory() {
     medicine_id: '', batch_number: '', supplier_id: '', quantity: '', purchase_price: '', manufacture_date: '', expiry_date: ''
   });
   const toast = useToast();
+  const batchSort = useSortPaginate(batches);
+  const { SortBtn: BatchSortBtn } = batchSort;
 
   useEffect(() => { fetchData(); }, []);
 
@@ -122,9 +125,9 @@ export default function Inventory() {
       {loading && activeTab !== 'overview' && <TableSkeleton rows={5} columns={5} />}
 
       {!loading && activeTab === 'batches' && (
-        <div className="table-container">
+      <div className="table-container">
           <table className="table">
-            <thead><tr><th>Medicine</th><th>Batch No.</th><th>Quantity</th><th>Expiry Date</th><th>Supplier</th></tr></thead>
+            <thead><tr><th><BatchSortBtn field="medicine_name">Medicine</BatchSortBtn></th><th><BatchSortBtn field="batch_number">Batch No.</BatchSortBtn></th><th><BatchSortBtn field="remaining_quantity">Quantity</BatchSortBtn></th><th><BatchSortBtn field="expiry_date">Expiry Date</BatchSortBtn></th><th>Supplier</th></tr></thead>
             <tbody>
               {batches.length === 0 ? (
                 <tr>
@@ -136,7 +139,7 @@ export default function Inventory() {
                     </button>
                   </td>
                 </tr>
-              ) : batches.map(b => (
+              ) : batchSort.paginated.map(b => (
                 <tr key={b.id}>
                   <td><strong>{b.medicine_name}</strong><div className="text-sm text-muted">{b.medicine_code}</div></td>
                   <td>{b.batch_number}</td>
@@ -147,6 +150,9 @@ export default function Inventory() {
               ))}
             </tbody>
           </table>
+          {batches.length > 0 && (
+            <Pagination page={batchSort.page} totalPages={batchSort.totalPages} totalItems={batchSort.totalItems} perPage={batchSort.perPage} setPage={batchSort.setPage} setPerPage={batchSort.setPerPage} />
+          )}
         </div>
       )}
 

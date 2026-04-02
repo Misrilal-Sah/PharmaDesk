@@ -3,6 +3,7 @@ import { billingAPI, patientsAPI, medicinesAPI } from '../services/api';
 import { useToast } from '../components/Toast/Toast';
 import { TableSkeleton } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { downloadInvoice } from '../utils/generateInvoice';
 import { Receipt, Plus, X, Printer, ShoppingCart, Download, Eye, Mail } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export default function Billing() {
   const [formData, setFormData] = useState({ patient_id: '', payment_method: 'Cash', discount_amount: 0, items: [] });
   const [newItem, setNewItem] = useState({ medicine_id: '', quantity: 1 });
   const toast = useToast();
+  const { SortBtn, paginated, page, setPage, perPage, setPerPage, totalPages, totalItems } = useSortPaginate(sales);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -133,7 +135,7 @@ export default function Billing() {
       ) : (
         <div className="table-container">
           <table className="table">
-            <thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th><SortBtn field="invoice_number">Invoice #</SortBtn></th><th><SortBtn field="patient_name">Customer</SortBtn></th><th><SortBtn field="sale_date">Date</SortBtn></th><th><SortBtn field="total_amount">Total</SortBtn></th><th><SortBtn field="payment_method">Payment</SortBtn></th><th><SortBtn field="payment_status">Status</SortBtn></th><th>Actions</th></tr></thead>
             <tbody>
               {sales.length === 0 ? (
                 <tr>
@@ -145,7 +147,7 @@ export default function Billing() {
                     </button>
                   </td>
                 </tr>
-              ) : sales.map(sale => (
+              ) : paginated.map(sale => (
                 <tr key={sale.id}>
                   <td><span className="badge badge-primary">{sale.invoice_number}</span></td>
                   <td>{sale.patient_name || 'Walk-in'}</td>
@@ -162,6 +164,9 @@ export default function Billing() {
               ))}
             </tbody>
           </table>
+          {sales.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} totalItems={totalItems} perPage={perPage} setPage={setPage} setPerPage={setPerPage} />
+          )}
         </div>
       )}
 

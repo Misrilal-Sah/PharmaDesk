@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import api, { notificationsAPI } from '../../services/api';
-import { Bell, Search, X, Users, Stethoscope, Pill, FileText, Receipt, Check, AlertTriangle, Info, CheckCircle } from 'lucide-react';
+import { Bell, Search, X, Users, Stethoscope, Pill, FileText, Receipt, Check, AlertTriangle, Info, CheckCircle, Moon, Sun } from 'lucide-react';
 import './Header.css';
 
 const iconMap = {
@@ -18,6 +19,7 @@ const notificationIcons = {
 
 export default function Header({ title }) {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -183,6 +185,15 @@ export default function Header({ title }) {
       </div>
 
       <div className="header-right">
+        {/* Theme Toggle */}
+        <button
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
 
         {/* Notifications */}
         <div className="notification-wrapper" ref={notifRef}>
@@ -230,13 +241,17 @@ export default function Header({ title }) {
           )}
         </div>
 
-        <div className="header-user" onClick={() => navigate('/settings')}>
-          <div className="user-avatar" style={user?.avatar ? { backgroundImage: `url(${user.avatar})`, backgroundSize: 'cover' } : {}}>
-            {!user?.avatar && (user?.full_name?.charAt(0) || 'U')}
-          </div>
-          <div className="user-info">
-            <span className="user-name">{user?.full_name || 'User'}</span>
-            <span className="user-role">{user?.role || 'Staff'}</span>
+        <div
+          className="header-user"
+          onClick={() => navigate('/settings')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/settings')}
+          title="Settings"
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="user-avatar">
+            {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
         </div>
       </div>

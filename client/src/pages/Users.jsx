@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast/Toast';
 import { useConfirm } from '../components/ConfirmModal/ConfirmModal';
 import { TableSkeleton } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { Plus, Edit, Trash2, X, Shield, UserCog } from 'lucide-react';
 
 export default function Users() {
@@ -16,6 +17,7 @@ export default function Users() {
   const [formData, setFormData] = useState({ username: '', email: '', password: '', full_name: '', role: 'Staff', phone: '' });
   const toast = useToast();
   const confirm = useConfirm();
+  const { SortBtn, paginated, page, setPage, perPage, setPerPage, totalPages, totalItems } = useSortPaginate(users);
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -103,7 +105,7 @@ export default function Users() {
       ) : (
         <div className="table-container">
           <table className="table">
-            <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th><SortBtn field="full_name">Name</SortBtn></th><th><SortBtn field="username">Username</SortBtn></th><th><SortBtn field="email">Email</SortBtn></th><th><SortBtn field="role">Role</SortBtn></th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
@@ -112,7 +114,7 @@ export default function Users() {
                     <p className="text-muted">No users found</p>
                   </td>
                 </tr>
-              ) : users.map(user => (
+              ) : paginated.map(user => (
                 <tr key={user.id}>
                   <td><strong>{user.full_name}</strong></td>
                   <td>{user.username}</td>
@@ -129,6 +131,9 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          {users.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} totalItems={totalItems} perPage={perPage} setPage={setPage} setPerPage={setPerPage} />
+          )}
         </div>
       )}
 

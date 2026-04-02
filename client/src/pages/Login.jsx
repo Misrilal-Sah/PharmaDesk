@@ -4,6 +4,30 @@ import { authAPI, twoFactorAPI } from '../services/api';
 import { Eye, EyeOff, LogIn, Mail, ArrowLeft, RefreshCw, Shield, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import './Login.css';
 
+function OTPInput({ otpValues, otpRefs, error, onOtpChange, onOtpKeyDown, onOtpPaste }) {
+  return (
+    <div className="otp-container">
+      <div className="otp-boxes">
+        {otpValues.map((value, index) => (
+          <input
+            key={index}
+            ref={otpRefs[index]}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={value}
+            onChange={(e) => onOtpChange(index, e.target.value)}
+            onKeyDown={(e) => onOtpKeyDown(index, e)}
+            onPaste={onOtpPaste}
+            className={`otp-box ${value ? 'filled' : ''} ${error ? 'error' : ''}`}
+            autoFocus={index === 0}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Login() {
   const { login } = useAuth();
   const [mode, setMode] = useState('login');
@@ -11,6 +35,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showResetPasswords, setShowResetPasswords] = useState({ new: false, confirm: false });
   const [pendingEmail, setPendingEmail] = useState('');
   const [pending2FAUserId, setPending2FAUserId] = useState(null);
   
@@ -37,21 +62,36 @@ export default function Login() {
   const handleOtpChange = (index, value) => {
     if (value.length > 1) value = value.slice(-1);
     if (!/^\d*$/.test(value)) return;
-    
+
+    const wasEmpty = !otpValues[index];
     const newOtp = [...otpValues];
     newOtp[index] = value;
     setOtpValues(newOtp);
     setError('');
 
-    // Auto-focus next input
-    if (value && index < 5) {
+    // Auto-focus next input only when filling an empty box (not editing)
+    if (value && wasEmpty && index < 5) {
       otpRefs[index + 1].current?.focus();
     }
   };
 
   const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
-      otpRefs[index - 1].current?.focus();
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      if (otpValues[index]) {
+        // Box has a digit — clear it and stay on current box
+        const newOtp = [...otpValues];
+        newOtp[index] = '';
+        setOtpValues(newOtp);
+        setError('');
+      } else if (index > 0) {
+        // Box already empty — clear previous box and focus it
+        const newOtp = [...otpValues];
+        newOtp[index - 1] = '';
+        setOtpValues(newOtp);
+        setError('');
+        otpRefs[index - 1].current?.focus();
+      }
     }
   };
 
@@ -215,27 +255,15 @@ export default function Login() {
     }
   };
 
-  // OTP Input Component
-  const OTPInput = () => (
-    <div className="otp-container">
-      <div className="otp-boxes">
-        {otpValues.map((value, index) => (
-          <input
-            key={index}
-            ref={otpRefs[index]}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={value}
-            onChange={(e) => handleOtpChange(index, e.target.value)}
-            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-            onPaste={handleOtpPaste}
-            className={`otp-box ${value ? 'filled' : ''} ${error ? 'error' : ''}`}
-            autoFocus={index === 0}
-          />
-        ))}
-      </div>
-    </div>
+  const renderOTPInput = () => (
+    <OTPInput
+      otpValues={otpValues}
+      otpRefs={otpRefs}
+      error={error}
+      onOtpChange={handleOtpChange}
+      onOtpKeyDown={handleOtpKeyDown}
+      onOtpPaste={handleOtpPaste}
+    />
   );
 
   const renderForm = () => {
@@ -258,7 +286,7 @@ export default function Login() {
             )}
             
             <form onSubmit={handle2FAVerify}>
-              <OTPInput />
+              {renderOTPInput()}
               
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading || getOtp().length !== 6}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <>
@@ -302,7 +330,7 @@ export default function Login() {
             )}
             
             <form onSubmit={handleVerifyOTP}>
-              <OTPInput />
+              {renderOTPInput()}
               
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading || getOtp().length !== 6}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <>
@@ -397,15 +425,15 @@ export default function Login() {
             <form onSubmit={handleResetPassword}>
               <div className="form-group">
                 <label className="form-label">Reset Code</label>
-                <OTPInput />
+                {renderOTPInput()}
               </div>
               
               <div className="form-group">
                 <label className="form-label">New Password</label>
-                <div className="input-icon-wrapper">
+                <div className="input-icon-wrapper" style={{ position: 'relative' }}>
                   <KeyRound size={18} className="input-icon" />
                   <input
-                    type="password"
+                    type={showResetPasswords.new ? 'text' : 'password'}
                     name="newPassword"
                     value={formData.newPassword}
                     onChange={handleChange}
@@ -413,23 +441,31 @@ export default function Login() {
                     placeholder="Create new password"
                     minLength={6}
                     required
+                    style={{ paddingRight: '2.5rem' }}
                   />
+                  <button type="button" onClick={() => setShowResetPasswords(p => ({ ...p, new: !p.new }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    {showResetPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
               
               <div className="form-group">
                 <label className="form-label">Confirm Password</label>
-                <div className="input-icon-wrapper">
+                <div className="input-icon-wrapper" style={{ position: 'relative' }}>
                   <KeyRound size={18} className="input-icon" />
                   <input
-                    type="password"
+                    type={showResetPasswords.confirm ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className="form-input with-icon"
                     placeholder="Confirm new password"
                     required
+                    style={{ paddingRight: '2.5rem' }}
                   />
+                  <button type="button" onClick={() => setShowResetPasswords(p => ({ ...p, confirm: !p.confirm }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    {showResetPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
               
@@ -538,24 +574,24 @@ export default function Login() {
               <svg viewBox="0 0 60 60" className="logo-icon-large">
                 <defs>
                   <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{ stopColor: '#1565C0' }} />
-                    <stop offset="100%" style={{ stopColor: '#00BFA5' }} />
+                    <stop offset="0%" style={{ stopColor: '#ffffff' }} />
+                    <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0.7)' }} />
                   </linearGradient>
                 </defs>
                 <rect x="12" y="9" width="27" height="33" rx="3" fill="none" stroke="url(#brandGrad)" strokeWidth="2.5" />
                 <rect x="18" y="6" width="15" height="6" rx="1.5" fill="url(#brandGrad)" />
-                <rect x="21" y="18" width="9" height="3" rx="1" fill="#90CAF9" />
-                <rect x="24" y="15" width="3" height="9" rx="1" fill="#90CAF9" />
+                <rect x="21" y="18" width="9" height="3" rx="1" fill="rgba(255,255,255,0.8)" />
+                <rect x="24" y="15" width="3" height="9" rx="1" fill="rgba(255,255,255,0.8)" />
                 <ellipse cx="45" cy="42" rx="12" ry="6" transform="rotate(-30 45 42)" fill="none" stroke="url(#brandGrad)" strokeWidth="2.5"/>
               </svg>
             </div>
             <h1>Pharma<span>Desk</span></h1>
             <p>Modern Pharmacy Management System</p>
             <div className="features-list">
-              <div className="feature-item"><div className="feature-icon">📋</div><span>Patient & Prescription Management</span></div>
-              <div className="feature-item"><div className="feature-icon">💊</div><span>Medicine Inventory Tracking</span></div>
-              <div className="feature-item"><div className="feature-icon">💰</div><span>Billing & Sales Reports</span></div>
-              <div className="feature-item"><div className="feature-icon">🔒</div><span>Secure & Role-based Access</span></div>
+              <div className="feature-item"><div className="feature-dot"></div><span>Patient &amp; Prescription Management</span></div>
+              <div className="feature-item"><div className="feature-dot"></div><span>Medicine Inventory Tracking</span></div>
+              <div className="feature-item"><div className="feature-dot"></div><span>Billing &amp; Sales Reports</span></div>
+              <div className="feature-item"><div className="feature-dot"></div><span>Secure Role-based Access</span></div>
             </div>
           </div>
         </div>

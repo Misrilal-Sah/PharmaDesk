@@ -193,7 +193,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions & Recent Activity */}
-      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div className="dashboard-bottom-grid">
         {/* Quick Actions */}
         <div className="card">
           <div className="card-header">
@@ -268,19 +268,19 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="empty-state">
-              <Receipt size={48} />
+              <Receipt size={40} />
               <p>No sales today</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Monthly Revenue */}
-      <div className="card" style={{ marginTop: '1.5rem' }}>
+      {/* Monthly Performance */}
+      <div className="card dashboard-month-card">
         <div className="card-header">
           <h3 className="card-title">
-            <TrendingUp size={20} style={{ marginRight: '0.5rem' }} />
-            This Month's Performance
+            <TrendingUp size={18} />
+            This Month&apos;s Performance
           </h3>
         </div>
         <div className="month-stats">
@@ -295,149 +295,13 @@ export default function Dashboard() {
           <div className="month-stat">
             <span className="month-label">Average Sale</span>
             <span className="month-value">
-              ₹{data?.month_sales?.count > 0 
-                ? Math.round(data.month_sales.total / data.month_sales.count).toLocaleString() 
+              ₹{data?.month_sales?.count > 0
+                ? Math.round(data.month_sales.total / data.month_sales.count).toLocaleString()
                 : 0}
             </span>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .stat-subtext {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-        }
-        
-        .quick-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        
-        .quick-action-item {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 0.875rem;
-          border-radius: var(--radius-md);
-          background: var(--background-secondary);
-          text-decoration: none;
-          color: var(--text-primary);
-          transition: all var(--transition-fast);
-        }
-        
-        .quick-action-item:hover {
-          background: var(--surface-hover);
-          transform: translateX(4px);
-        }
-        
-        .quick-action-item div:nth-child(2) {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .quick-action-item strong {
-          font-size: 0.9375rem;
-          font-weight: 500;
-        }
-        
-        .quick-action-item span {
-          font-size: 0.8125rem;
-          color: var(--text-secondary);
-        }
-        
-        .quick-action-item svg:last-child {
-          color: var(--text-muted);
-        }
-        
-        .qa-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: var(--radius-md);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .qa-icon.blue { background: rgba(21, 101, 192, 0.1); color: var(--primary); }
-        .qa-icon.green { background: var(--success-bg); color: var(--success); }
-        .qa-icon.orange { background: var(--warning-bg); color: var(--warning); }
-        .qa-icon.red { background: var(--error-bg); color: var(--error); }
-        
-        .recent-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        
-        .recent-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem;
-          background: var(--background-secondary);
-          border-radius: var(--radius-md);
-        }
-        
-        .recent-info, .recent-amount {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .recent-info strong, .recent-amount strong {
-          font-size: 0.9375rem;
-        }
-        
-        .recent-info span, .recent-amount span {
-          font-size: 0.8125rem;
-          color: var(--text-secondary);
-        }
-        
-        .recent-amount {
-          text-align: right;
-        }
-        
-        .month-stats {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-        }
-        
-        .month-stat {
-          display: flex;
-          flex-direction: column;
-          text-align: center;
-          padding: 1rem;
-          background: var(--background-secondary);
-          border-radius: var(--radius-md);
-        }
-        
-        .month-label {
-          font-size: 0.8125rem;
-          color: var(--text-secondary);
-          margin-bottom: 0.5rem;
-        }
-        
-        .month-value {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: var(--primary);
-        }
-        
-        @media (max-width: 1024px) {
-          .dashboard-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        
-        @media (max-width: 640px) {
-          .month-stats {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </div>
   );
 }

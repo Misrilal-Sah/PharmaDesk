@@ -14,7 +14,7 @@
 
 .timeline-header {
   padding: 1.5rem;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   border-radius: 12px 12px 0 0;
 }
 

@@ -21,6 +21,7 @@
 
 .date-range-trigger:hover {
   border-color: var(--primary);
+  background: var(--surface-hover);
 }
 
 .date-range-trigger svg:last-child {

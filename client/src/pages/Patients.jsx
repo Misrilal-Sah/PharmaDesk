@@ -4,6 +4,7 @@ import { useToast } from '../components/Toast/Toast';
 import { useConfirm } from '../components/ConfirmModal/ConfirmModal';
 import { TableSkeleton } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { Search, Plus, Edit, Trash2, X, Users, Clock } from 'lucide-react';
 import PatientTimeline from '../components/PatientTimeline/PatientTimeline';
 
@@ -21,6 +22,7 @@ export default function Patients() {
   });
   const toast = useToast();
   const confirm = useConfirm();
+  const { SortBtn, paginated, page, setPage, perPage, setPerPage, totalPages, totalItems } = useSortPaginate(patients);
 
   useEffect(() => {
     fetchPatients();
@@ -140,11 +142,11 @@ export default function Patients() {
           <table className="table">
             <thead>
               <tr>
-                <th>Patient Code</th>
-                <th>Name</th>
-                <th>Gender</th>
-                <th>Phone</th>
-                <th>Blood Group</th>
+                <th><SortBtn field="patient_code">Patient Code</SortBtn></th>
+                <th><SortBtn field="full_name">Name</SortBtn></th>
+                <th><SortBtn field="gender">Gender</SortBtn></th>
+                <th><SortBtn field="phone">Phone</SortBtn></th>
+                <th><SortBtn field="blood_group">Blood Group</SortBtn></th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -160,7 +162,7 @@ export default function Patients() {
                   </td>
                 </tr>
               ) : (
-                patients.map((patient) => (
+                paginated.map((patient) => (
                   <tr key={patient.id}>
                     <td><span className="badge badge-primary">{patient.patient_code}</span></td>
                     <td><strong>{patient.full_name}</strong></td>
@@ -179,6 +181,9 @@ export default function Patients() {
               )}
             </tbody>
           </table>
+          {patients.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} totalItems={totalItems} perPage={perPage} setPage={setPage} setPerPage={setPerPage} />
+          )}
         </div>
       )}
 

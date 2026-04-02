@@ -4,6 +4,7 @@ import { useToast } from '../components/Toast/Toast';
 import { useConfirm } from '../components/ConfirmModal/ConfirmModal';
 import { TableSkeleton } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { Search, Plus, X, CheckCircle, FileText } from 'lucide-react';
 
 export default function Prescriptions() {
@@ -17,6 +18,7 @@ export default function Prescriptions() {
   const [newItem, setNewItem] = useState({ medicine_id: '', quantity: 1, dosage: '', frequency: '', duration: '' });
   const toast = useToast();
   const confirm = useConfirm();
+  const { SortBtn, paginated, page, setPage, perPage, setPerPage, totalPages, totalItems } = useSortPaginate(prescriptions);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -112,7 +114,7 @@ export default function Prescriptions() {
       ) : (
         <div className="table-container">
           <table className="table">
-            <thead><tr><th>Rx Code</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Items</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th><SortBtn field="prescription_code">Rx Code</SortBtn></th><th><SortBtn field="patient_name">Patient</SortBtn></th><th><SortBtn field="doctor_name">Doctor</SortBtn></th><th><SortBtn field="prescribed_date">Date</SortBtn></th><th>Items</th><th><SortBtn field="status">Status</SortBtn></th><th>Actions</th></tr></thead>
             <tbody>
               {prescriptions.length === 0 ? (
                 <tr>
@@ -124,7 +126,7 @@ export default function Prescriptions() {
                     </button>
                   </td>
                 </tr>
-              ) : prescriptions.map(rx => (
+              ) : paginated.map(rx => (
                 <tr key={rx.id}>
                   <td><span className="badge badge-primary">{rx.prescription_code}</span></td>
                   <td><strong>{rx.patient_name}</strong><div className="text-sm text-muted">{rx.patient_code}</div></td>
@@ -143,6 +145,9 @@ export default function Prescriptions() {
               ))}
             </tbody>
           </table>
+          {prescriptions.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} totalItems={totalItems} perPage={perPage} setPage={setPage} setPerPage={setPerPage} />
+          )}
         </div>
       )}
 

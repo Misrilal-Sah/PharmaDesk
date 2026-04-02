@@ -4,6 +4,7 @@ import { useToast } from '../components/Toast/Toast';
 import { useConfirm } from '../components/ConfirmModal/ConfirmModal';
 import { TableSkeleton } from '../components/Skeleton/Skeleton';
 import ExportButton from '../components/ExportButton/ExportButton';
+import { useSortPaginate, Pagination } from '../utils/useSortPaginate';
 import { Search, Plus, Edit, Trash2, X, Pill } from 'lucide-react';
 
 export default function Medicines() {
@@ -19,6 +20,7 @@ export default function Medicines() {
   });
   const toast = useToast();
   const confirm = useConfirm();
+  const { SortBtn, paginated, page, setPage, perPage, setPerPage, totalPages, totalItems } = useSortPaginate(medicines);
 
   useEffect(() => { fetchData(); }, [search]);
 
@@ -118,7 +120,7 @@ export default function Medicines() {
         <div className="table-container">
           <table className="table">
             <thead>
-              <tr><th>Code</th><th>Name</th><th>Category</th><th>Form</th><th>Stock</th><th>Price</th><th>Actions</th></tr>
+              <tr><th><SortBtn field="medicine_code">Code</SortBtn></th><th><SortBtn field="name">Name</SortBtn></th><th><SortBtn field="category_name">Category</SortBtn></th><th><SortBtn field="dosage_form">Form</SortBtn></th><th><SortBtn field="total_stock">Stock</SortBtn></th><th><SortBtn field="selling_price">Price</SortBtn></th><th>Actions</th></tr>
             </thead>
             <tbody>
               {medicines.length === 0 ? (
@@ -131,7 +133,7 @@ export default function Medicines() {
                     </button>
                   </td>
                 </tr>
-              ) : medicines.map((med) => (
+              ) : paginated.map((med) => (
                 <tr key={med.id}>
                   <td><span className="badge badge-primary">{med.medicine_code}</span></td>
                   <td>
@@ -156,6 +158,9 @@ export default function Medicines() {
               ))}
             </tbody>
           </table>
+          {medicines.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} totalItems={totalItems} perPage={perPage} setPage={setPage} setPerPage={setPerPage} />
+          )}
         </div>
       )}
 

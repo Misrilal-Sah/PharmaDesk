@@ -2,7 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 
-const COLORS = ['#1565C0', '#00BFA5', '#FF9800', '#E91E63', '#9C27B0'];
+const COLORS = ['#15803D', '#0369A1', '#D97706', '#DC2626', '#7C3AED'];
 
 export default function TopMedicinesChart({ data = [], height = 300, showValue = 'quantity' }) {
   // Limit to top 5 and format data
