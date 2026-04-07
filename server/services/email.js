@@ -1,35 +1,37 @@
-import nodemailer from 'nodemailer';
+import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER || process.env.SMTP_EMAIL;
-const SMTP_PASS = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
-const SMTP_FROM = process.env.FROM_EMAIL || `"PharmaDesk" <${SMTP_USER || 'support@pharmadesk.com'}>`;
+// Brevo API configuration
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'noreply@pharmadesk.local';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'Pharmadesk';
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
-  auth: SMTP_USER && SMTP_PASS
-    ? {
-        user: SMTP_USER,
-        pass: SMTP_PASS
-      }
-    : undefined
-});
+// Brevo API endpoint
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-// Verify connection
-transporter.verify((error, success) => {
-  if (error) {
-    console.log('⚠️  Email service not configured:', error.message);
-  } else {
-    console.log('✅ Email service ready');
+// Axios instance with Brevo API key
+const brevoClient = axios.create({
+  baseURL: 'https://api.brevo.com/v3',
+  headers: {
+    'api-key': BREVO_API_KEY,
+    'Content-Type': 'application/json'
   }
 });
+
+// Test connection (silently skip if not configured)
+(async () => {
+  try {
+    const response = await brevoClient.get('/account');
+    console.log('✅ Brevo email service ready');
+  } catch (error) {
+    // Silently skip - email service is optional
+    if (process.env.DEBUG_EMAIL) {
+      console.log('ℹ️  Brevo email service skipped (optional)');
+    }
+  }
+})();
 
 // Generate 6-digit OTP
 export function generateOTP() {
@@ -45,11 +47,11 @@ export function generateToken() {
 
 // Send verification email for signup
 export async function sendVerificationEmail(email, otp) {
-  const mailOptions = {
-    from: SMTP_FROM,
-    to: email,
+  const emailData = {
+    sender: { name: FROM_NAME, email: FROM_EMAIL },
+    to: [{ email: email }],
     subject: 'Verify Your PharmaDesk Account',
-    html: `
+    htmlContent: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #1565C0, #00BFA5); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
           <h1 style="color: white; margin: 0;">PharmaDesk</h1>
@@ -69,10 +71,10 @@ export async function sendVerificationEmail(email, otp) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await brevoClient.post('/smtp/email', emailData);
     return true;
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error('Email send error:', error.response?.data?.message || error.message);
     return false;
   }
 }
@@ -81,11 +83,11 @@ export async function sendVerificationEmail(email, otp) {
 export async function sendPasswordResetEmail(email, token, otp) {
   const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
-  const mailOptions = {
-    from: SMTP_FROM,
-    to: email,
+  const emailData = {
+    sender: { name: FROM_NAME, email: FROM_EMAIL },
+    to: [{ email: email }],
     subject: 'Reset Your PharmaDesk Password',
-    html: `
+    htmlContent: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #1565C0, #00BFA5); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
           <h1 style="color: white; margin: 0;">PharmaDesk</h1>
@@ -105,21 +107,21 @@ export async function sendPasswordResetEmail(email, token, otp) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await brevoClient.post('/smtp/email', emailData);
     return true;
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error('Email send error:', error.response?.data?.message || error.message);
     return false;
   }
 }
 
 // Send email change verification
 export async function sendEmailChangeOTP(newEmail, otp) {
-  const mailOptions = {
-    from: SMTP_FROM,
-    to: newEmail,
+  const emailData = {
+    sender: { name: FROM_NAME, email: FROM_EMAIL },
+    to: [{ email: newEmail }],
     subject: 'Verify Your New Email Address',
-    html: `
+    htmlContent: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #1565C0, #00BFA5); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
           <h1 style="color: white; margin: 0;">PharmaDesk</h1>
@@ -138,10 +140,10 @@ export async function sendEmailChangeOTP(newEmail, otp) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await brevoClient.post('/smtp/email', emailData);
     return true;
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error('Email send error:', error.response?.data?.message || error.message);
     return false;
   }
 }
@@ -163,11 +165,11 @@ export async function sendInvoiceEmail(email, invoice) {
     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  const mailOptions = {
-    from: SMTP_FROM,
-    to: email,
+  const emailData = {
+    sender: { name: FROM_NAME, email: FROM_EMAIL },
+    to: [{ email: email }],
     subject: `Your Receipt - Invoice #${invoice.invoice_number}`,
-    html: `
+    htmlContent: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #1565C0, #1976D2); padding: 30px; text-align: center;">
@@ -250,7 +252,7 @@ export async function sendInvoiceEmail(email, invoice) {
         <div style="background: #1565C0; padding: 25px; text-align: center;">
           <p style="color: white; margin: 0; font-weight: 600;">Thank you for your purchase!</p>
           <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0; font-size: 12px;">
-            This is a computer generated receipt. For any queries, contact us at ${SMTP_USER || 'support@pharmadesk.com'}
+            This is a computer generated receipt. For any queries, contact us at ${FROM_EMAIL}
           </p>
         </div>
       </div>
@@ -258,12 +260,12 @@ export async function sendInvoiceEmail(email, invoice) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await brevoClient.post('/smtp/email', emailData);
     return true;
   } catch (error) {
-    console.error('Invoice email send error:', error);
+    console.error('Invoice email send error:', error.response?.data?.message || error.message);
     return false;
   }
 }
 
-export default transporter;
+export default brevoClient;

@@ -252,16 +252,7 @@ CREATE TABLE IF NOT EXISTS verification_tokens (
     INDEX idx_verification_used (used)
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_patients_name ON patients(full_name);
-CREATE INDEX idx_patients_code ON patients(patient_code);
-CREATE INDEX idx_medicines_name ON medicines(name);
-CREATE INDEX idx_medicines_code ON medicines(medicine_code);
-CREATE INDEX idx_batches_expiry ON batches(expiry_date);
-CREATE INDEX idx_prescriptions_patient ON prescriptions(patient_id);
-CREATE INDEX idx_prescriptions_status ON prescriptions(status);
-CREATE INDEX idx_sales_date ON sales(sale_date);
-CREATE INDEX idx_sales_invoice ON sales(invoice_number);
+-- Performance indexes are defined within table creation above
 
 -- User sessions table for tracking active logins
 CREATE TABLE IF NOT EXISTS user_sessions (
