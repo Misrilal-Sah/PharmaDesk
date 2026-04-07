@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "create-admin": "node create-admin.js",
+    "seed": "node seed-data.js",
+    "fix-audit": "node fix-audit-table.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

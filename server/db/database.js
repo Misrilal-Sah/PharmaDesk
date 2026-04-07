@@ -3,48 +3,48 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getDatabaseName, getMySqlConnectionConfig, getMySqlPoolConfig } from './mysqlConfig.js';
 
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const databaseName = getDatabaseName();
+
+function getSchemaStatements(schemaContent) {
+    // schema.sql contains CREATE DATABASE / USE for local workflows; skip those for managed DB services.
+    const cleanedSchema = schemaContent
+        .replace(/^\s*CREATE\s+DATABASE\b[^;]*;?\s*$/gim, '')
+        .replace(/^\s*USE\s+[^;]*;?\s*$/gim, '');
+
+    return cleanedSchema
+        .split(';')
+        .map(statement => statement.trim())
+        .filter(Boolean);
+}
 
 // Create connection pool
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'pharmadesk',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const pool = mysql.createPool(getMySqlPoolConfig());
 
 // Initialize database
 export async function initDatabase() {
     try {
-        // First connect without database to create it if needed
-        const connection = await mysql.createConnection({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            multipleStatements: true
-        });
+        const connection = await mysql.createConnection(
+            getMySqlConnectionConfig({ includeDatabase: true, multipleStatements: true })
+        );
 
         // Read and execute schema
         const schemaPath = path.join(__dirname, 'schema.sql');
         const schema = fs.readFileSync(schemaPath, 'utf8');
-        
+
         // Split and execute statements
-        const statements = schema.split(';').filter(s => s.trim());
+        const statements = getSchemaStatements(schema);
         for (const statement of statements) {
-            if (statement.trim()) {
-                try {
-                    await connection.query(statement);
-                } catch (err) {
-                    // Ignore duplicate entry errors for initial data
-                    if (!err.message.includes('Duplicate entry') && !err.message.includes('already exists')) {
-                        console.log('SQL Warning:', err.message);
-                    }
+            try {
+                await connection.query(statement);
+            } catch (err) {
+                // Ignore duplicate entry errors for initial data
+                if (!err.message.includes('Duplicate entry') && !err.message.includes('already exists')) {
+                    console.log('SQL Warning:', err.message);
                 }
             }
         }
@@ -66,7 +66,7 @@ async function runMigrations(connection) {
         // Notifications table migrations
         `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category VARCHAR(50)`,
         `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id INT`,
-        // Users table migrations  
+        // Users table migrations
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar VARCHAR(255)`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE`,
@@ -89,7 +89,7 @@ async function runMigrations(connection) {
                         // Check if column exists
                         const [cols] = await connection.query(
                             `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
-                            [process.env.DB_NAME || 'pharmadesk', tableName, columnName]
+                            [databaseName, tableName, columnName]
                         );
                         if (cols.length === 0) {
                             // Column doesn't exist, add it
