@@ -233,6 +233,25 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_notifications_category (category, reference_id)
 );
 
+-- Verification tokens (signup OTP, password reset OTP, email change OTP)
+CREATE TABLE IF NOT EXISTS verification_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(255),
+    otp VARCHAR(10),
+    type VARCHAR(50) NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_verification_email_type (email, type),
+    INDEX idx_verification_token (token),
+    INDEX idx_verification_otp (otp),
+    INDEX idx_verification_expiry (expires_at),
+    INDEX idx_verification_used (used)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_patients_name ON patients(full_name);
 CREATE INDEX idx_patients_code ON patients(patient_code);
@@ -264,7 +283,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 );
 
 -- Insert default admin user (password: admin123)
-INSERT INTO users (username, email, password_hash, full_name, role) 
+INSERT INTO users (username, email, password_hash, full_name, role)
 VALUES ('admin', 'admin@pharmadesk.com', '$2a$10$rQnM1H7J5RJZ5J5J5J5J5OvZDZDZDZDZDZDZDZDZDZDZDZDZDZDZD', 'System Administrator', 'Admin');
 
 -- Insert default categories

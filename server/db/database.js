@@ -63,6 +63,24 @@ export async function initDatabase() {
 // Run database migrations for new columns
 async function runMigrations(connection) {
     const migrations = [
+        // Verification tokens table migration
+        `CREATE TABLE IF NOT EXISTS verification_tokens (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            token VARCHAR(255),
+            otp VARCHAR(10),
+            type VARCHAR(50) NOT NULL,
+            used BOOLEAN DEFAULT FALSE,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_verification_email_type (email, type),
+            INDEX idx_verification_token (token),
+            INDEX idx_verification_otp (otp),
+            INDEX idx_verification_expiry (expires_at),
+            INDEX idx_verification_used (used)
+        )`,
         // Notifications table migrations
         `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category VARCHAR(50)`,
         `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id INT`,

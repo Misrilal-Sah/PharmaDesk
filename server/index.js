@@ -28,13 +28,46 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = (process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map(origin => origin.trim())
+
+function normalizeOrigin(origin = '') {
+    const trimmed = String(origin).trim().replace(/\/+$/, '');
+    if (!trimmed) return '';
+
+    try {
+        const parsed = new URL(trimmed);
+        return `${parsed.protocol}//${parsed.host}`.toLowerCase();
+    } catch (error) {
+        return trimmed.toLowerCase();
+    }
+}
+
+const configuredOrigins = [
+    ...(process.env.CORS_ORIGINS || '').split(','),
+    process.env.FRONTEND_URL || ''
+]
+    .map(origin => normalizeOrigin(origin))
     .filter(Boolean);
 
+const allowedOrigins = new Set(configuredOrigins);
+
 const corsOptions = {
-    origin: allowedOrigins.length ? allowedOrigins : true,
+    origin: (origin, callback) => {
+        // Allow non-browser tools and same-origin server calls with no Origin header.
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.size === 0) {
+            return callback(null, true);
+        }
+
+        const normalizedOrigin = normalizeOrigin(origin);
+        if (allowedOrigins.has(normalizedOrigin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
     credentials: true
 };
 
