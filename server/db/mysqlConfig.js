@@ -1,65 +1,8 @@
 import dotenv from 'dotenv';
-
-dotenv.config();
-
-/**
- * Get the database name from environment variables
- * @returns {string} Database name
- */
-export function getDatabaseName() {
-    return process.env.DB_NAME || 'defaultdb';
-}
-
-/**
- * Get MySQL connection configuration
- * @param {Object} options - Configuration options
- * @param {boolean} options.includeDatabase - Whether to include database name in config
- * @returns {Object} MySQL connection config
- */
-export function getMySqlConnectionConfig(options = {}) {
-    const { includeDatabase = true } = options;
-
-    const config = {
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT || '3306', 10),
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-    };
-
-    if (includeDatabase) {
-        config.database = getDatabaseName();
-    }
-
-    // Configure SSL
-    const sslMode = (process.env.DB_SSL_MODE || 'DISABLED').toUpperCase();
-    if (sslMode !== 'DISABLED') {
-        config.ssl = {
-            rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true',
-        };
-
-        // Handle SSL certificate
-        if (process.env.DB_CA_CERT) {
-            config.ssl.ca = process.env.DB_CA_CERT;
-        } else if (process.env.DB_CA_PATH) {
-            config.ssl.ca = [process.env.DB_CA_PATH];
-        }
-    }
-
-    return config;
-}
-
-/**
- * Get database connection URL from environment or individual variables
- * @returns {string|null} Connection URL or null if not configured
- */
-export function getDatabaseUrl() {
-    return process.env.DATABASE_URL || null;
-}
 import fs from 'fs';
 import path from 'path';
+
+dotenv.config();
 
 function parseNumber(value, fallback) {
   const parsed = Number(value);
