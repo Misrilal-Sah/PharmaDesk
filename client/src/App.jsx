@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SidebarProvider } from './context/SidebarContext';
@@ -66,7 +67,7 @@ function AppRoutes() {
           <Login />
         </PublicRoute>
       } />
-      
+
       <Route path="/" element={
         <ProtectedRoute>
           <Layout />
@@ -92,20 +93,22 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <SidebarProvider>
-            <ShortcutsProvider>
-              <ToastProvider>
-                <ConfirmProvider>
-                  <AppRoutes />
-                </ConfirmProvider>
-              </ToastProvider>
-            </ShortcutsProvider>
-          </SidebarProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <SidebarProvider>
+              <ShortcutsProvider>
+                <ToastProvider>
+                  <ConfirmProvider>
+                    <AppRoutes />
+                  </ConfirmProvider>
+                </ToastProvider>
+              </ShortcutsProvider>
+            </SidebarProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }

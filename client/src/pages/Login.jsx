@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI, twoFactorAPI } from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, LogIn, Mail, ArrowLeft, RefreshCw, Shield, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import './Login.css';
 
@@ -38,7 +39,7 @@ export default function Login() {
   const [showResetPasswords, setShowResetPasswords] = useState({ new: false, confirm: false });
   const [pendingEmail, setPendingEmail] = useState('');
   const [pending2FAUserId, setPending2FAUserId] = useState(null);
-  
+
   // OTP Input refs
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
@@ -99,7 +100,7 @@ export default function Login() {
     e.preventDefault();
     const paste = e.clipboardData.getData('text').slice(0, 6);
     if (!/^\d+$/.test(paste)) return;
-    
+
     const newOtp = paste.split('').concat(['', '', '', '', '', '']).slice(0, 6);
     setOtpValues(newOtp);
     otpRefs[Math.min(paste.length, 5)].current?.focus();
@@ -125,6 +126,25 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await authAPI.googleLogin({ tokenId: credentialResponse.credential });
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      window.location.href = '/';
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google login failed');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Failed to sign in with Google. Please try again.');
+    setLoading(false);
   };
 
   const handle2FAVerify = async (e) => {
@@ -237,10 +257,10 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await authAPI.resetPassword({ 
-        email: pendingEmail, 
-        otp, 
-        newPassword: formData.newPassword 
+      await authAPI.resetPassword({
+        email: pendingEmail,
+        otp,
+        newPassword: formData.newPassword
       });
       setMessage('Password reset successful!');
       setTimeout(() => {
@@ -278,23 +298,23 @@ export default function Login() {
             <p className="login-subtitle">
               Enter the 6-digit code from your authenticator app
             </p>
-            
+
             {error && (
               <div className="alert alert-error">
                 <AlertCircle size={18} /> {error}
               </div>
             )}
-            
+
             <form onSubmit={handle2FAVerify}>
               {renderOTPInput()}
-              
+
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading || getOtp().length !== 6}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <>
                   <Shield size={18} /> Verify & Sign In
                 </>}
               </button>
             </form>
-            
+
             <div className="auth-footer">
               <p className="resend-text" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 Use a backup code if you can't access your authenticator app
@@ -317,7 +337,7 @@ export default function Login() {
               Enter the 6-digit code sent to<br />
               <strong>{pendingEmail}</strong>
             </p>
-            
+
             {message && (
               <div className="alert alert-success">
                 <CheckCircle2 size={18} /> {message}
@@ -328,17 +348,17 @@ export default function Login() {
                 <AlertCircle size={18} /> {error}
               </div>
             )}
-            
+
             <form onSubmit={handleVerifyOTP}>
               {renderOTPInput()}
-              
+
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading || getOtp().length !== 6}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <>
                   <CheckCircle2 size={18} /> Verify & Continue
                 </>}
               </button>
             </form>
-            
+
             <div className="auth-footer">
               <p className="resend-text">
                 Didn't receive the code?{' '}
@@ -361,13 +381,13 @@ export default function Login() {
             </div>
             <h2>Forgot Password?</h2>
             <p className="login-subtitle">No worries! Enter your email and we'll send you a reset code.</p>
-            
+
             {error && (
               <div className="alert alert-error">
                 <AlertCircle size={18} /> {error}
               </div>
             )}
-            
+
             <form onSubmit={handleForgotPassword}>
               <div className="form-group">
                 <label className="form-label">Email Address</label>
@@ -390,7 +410,7 @@ export default function Login() {
                 </>}
               </button>
             </form>
-            
+
             <div className="auth-footer">
               <button type="button" className="link-btn back-link" onClick={() => setMode('login')}>
                 <ArrowLeft size={14} /> Back to Login
@@ -410,7 +430,7 @@ export default function Login() {
               Enter the code sent to<br />
               <strong>{pendingEmail}</strong>
             </p>
-            
+
             {message && (
               <div className="alert alert-success">
                 <CheckCircle2 size={18} /> {message}
@@ -421,13 +441,13 @@ export default function Login() {
                 <AlertCircle size={18} /> {error}
               </div>
             )}
-            
+
             <form onSubmit={handleResetPassword}>
               <div className="form-group">
                 <label className="form-label">Reset Code</label>
                 {renderOTPInput()}
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">New Password</label>
                 <div className="input-icon-wrapper" style={{ position: 'relative' }}>
@@ -448,7 +468,7 @@ export default function Login() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Confirm Password</label>
                 <div className="input-icon-wrapper" style={{ position: 'relative' }}>
@@ -468,14 +488,14 @@ export default function Login() {
                   </button>
                 </div>
               </div>
-              
+
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <>
                   <KeyRound size={18} /> Reset Password
                 </>}
               </button>
             </form>
-            
+
             <div className="auth-footer">
               <button type="button" className="link-btn back-link" onClick={() => { setMode('login'); resetOtp(); }}>
                 <ArrowLeft size={14} /> Back to Login
@@ -556,6 +576,24 @@ export default function Login() {
               <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
                 {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : <><LogIn size={18} /> Sign In</>}
               </button>
+              <div style={{ position: 'relative', margin: '1rem 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <hr style={{ flex: 1, borderColor: 'var(--border)' }} />
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Or</span>
+                  <hr style={{ flex: 1, borderColor: 'var(--border)' }} />
+                </div>
+              </div>
+              <div style={{ width: '100%' }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  locale="en"
+                  text="signin_with"
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                />
+              </div>
             </form>
             <div className="login-footer">
               <p>Don't have an account? <button type="button" className="link-btn" onClick={() => setMode('register')}>Sign Up</button></p>

@@ -36,6 +36,7 @@ export default api;
 // Auth API
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
+  googleLogin: (data) => api.post('/auth/google-login', data),
   register: (data) => api.post('/auth/register', data),
   verifySignup: (data) => api.post('/auth/verify-signup', data),
   resendOTP: (data) => api.post('/auth/resend-otp', data),

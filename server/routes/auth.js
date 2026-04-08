@@ -1,14 +1,15 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { query, queryOne, insert, update } from '../db/database.js';
 import { generateToken, authenticateToken } from '../middleware/auth.js';
 import { createSession, invalidateSession } from './sessions.js';
-import { 
-  generateOTP, 
+import {
+  generateOTP,
   generateToken as generateVerificationToken,
-  sendVerificationEmail, 
+  sendVerificationEmail,
   sendPasswordResetEmail,
-  sendEmailChangeOTP 
+  sendEmailChangeOTP
 } from '../services/email.js';
 
 const router = express.Router();
@@ -37,7 +38,7 @@ router.post('/register', async (req, res) => {
 
         // Insert user (unverified)
         const userId = await insert(
-            `INSERT INTO users (username, email, password_hash, full_name, role, phone, is_verified, is_active) 
+            `INSERT INTO users (username, email, password_hash, full_name, role, phone, is_verified, is_active)
              VALUES (?, ?, ?, ?, ?, ?, FALSE, FALSE)`,
             [username, email, password_hash, full_name, role || 'Staff', phone || null]
         );
@@ -59,7 +60,7 @@ router.post('/register', async (req, res) => {
             console.log(`📧 Verification OTP for ${email}: ${otp}`);
         }
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: 'Verification code sent to your email',
             userId,
             email,
@@ -82,8 +83,8 @@ router.post('/verify-signup', async (req, res) => {
 
         // Find valid token
         const token = await queryOne(
-            `SELECT * FROM verification_tokens 
-             WHERE email = ? AND otp = ? AND type = 'signup' 
+            `SELECT * FROM verification_tokens
+             WHERE email = ? AND otp = ? AND type = 'signup'
              AND used = FALSE AND expires_at > NOW()
              ORDER BY created_at DESC LIMIT 1`,
             [email, otp]
@@ -103,10 +104,10 @@ router.post('/verify-signup', async (req, res) => {
         const user = await queryOne('SELECT id, username, email, full_name, role FROM users WHERE id = ?', [token.user_id]);
         const authToken = generateToken(user);
 
-        res.json({ 
+        res.json({
             message: 'Email verified successfully',
             user,
-            token: authToken 
+            token: authToken
         });
     } catch (error) {
         console.error('Verify signup error:', error);
@@ -222,8 +223,8 @@ router.post('/reset-password', async (req, res) => {
 
         // Find valid token
         const token = await queryOne(
-            `SELECT * FROM verification_tokens 
-             WHERE email = ? AND otp = ? AND type = 'password_reset' 
+            `SELECT * FROM verification_tokens
+             WHERE email = ? AND otp = ? AND type = 'password_reset'
              AND used = FALSE AND expires_at > NOW()
              ORDER BY created_at DESC LIMIT 1`,
             [email, otp]
@@ -326,7 +327,7 @@ router.get('/me', authenticateToken, async (req, res) => {
 
         // Import permissions dynamically to avoid circular dependency
         const { getRolePermissions } = await import('../middleware/permissions.js');
-        
+
         res.json({
             ...user,
             permissions: getRolePermissions(user.role)
@@ -419,8 +420,8 @@ router.post('/verify-email-change', authenticateToken, async (req, res) => {
 
         // Find valid token
         const token = await queryOne(
-            `SELECT * FROM verification_tokens 
-             WHERE user_id = ? AND email = ? AND otp = ? AND type = 'email_change' 
+            `SELECT * FROM verification_tokens
+             WHERE user_id = ? AND email = ? AND otp = ? AND type = 'email_change'
              AND used = FALSE AND expires_at > NOW()
              ORDER BY created_at DESC LIMIT 1`,
             [req.user.id, newEmail, otp]
@@ -440,6 +441,80 @@ router.post('/verify-email-change', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Verify email change error:', error);
         res.status(500).json({ error: 'Email change failed' });
+    }
+});
+
+// Google OAuth Login
+router.post('/google-login', async (req, res) => {
+    try {
+        const { tokenId } = req.body;
+
+        if (!tokenId) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+
+        const { OAuth2Client } = await import('google-auth-library');
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+        // Verify token
+        const ticket = await client.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, picture, sub: googleId } = payload;
+
+        // Check if user exists
+        let user = await queryOne('SELECT * FROM users WHERE email = ?', [email]);
+
+        if (user) {
+            // Update google_id if not already set
+            if (!user.google_id) {
+                await update('UPDATE users SET google_id = ? WHERE id = ?', [googleId, user.id]);
+            }
+        } else {
+            // Create new user from Google data
+            const username = email.split('@')[0] + '_' + Date.now();
+            // Generate random password hash (OAuth users won't use password login)
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const password_hash = await bcrypt.hash(randomPassword, 10);
+
+            const userId = await insert(
+                `INSERT INTO users (username, email, password_hash, full_name, google_id, avatar, is_verified, is_active, role, phone)
+                 VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE, 'Staff', NULL)`,
+                [username, email, password_hash, name, googleId, picture]
+            );
+
+            user = await queryOne('SELECT id, username, email, full_name, role, phone, avatar FROM users WHERE id = ?', [userId]);
+        }
+
+        // Generate token
+        const token = generateToken(user);
+
+        // Create session record
+        try {
+            await createSession(user.id, token, req);
+        } catch (sessionError) {
+            console.error('Failed to create session record:', sessionError);
+        }
+
+        res.json({
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                full_name: user.full_name,
+                role: user.role,
+                phone: user.phone,
+                avatar: user.avatar
+            },
+            token
+        });
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({ error: 'Google login failed' });
     }
 });
 
