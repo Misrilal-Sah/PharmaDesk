@@ -331,3 +331,5 @@ Open **http://localhost:5173** — admin credentials are printed by `create-admi
 </div>
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20,24&height=140&section=footer&text=Because%20your%20patients%20deserve%20efficient%20care.&fontSize=15&fontColor=aaaaaa&fontAlignY=72" width="100%" />
+
+
